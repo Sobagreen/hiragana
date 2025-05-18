@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiragana Learning Bot</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+        .option-button {
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .option-button:hover {
+            transform: scale(1.05);
+        }
+        .correct {
+            animation: flash-green 0.5s;
+        }
+        .incorrect {
+            animation: flash-red 0.5s;
+        }
+        @keyframes flash-green {
+            0% { background-color: #34d399; }
+            100% { background-color: #ffffff; }
+        }
+        @keyframes flash-red {
+            0% { background-color: #ef4444; }
+            100% { background-color: #ffffff; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center mb-4 text-gray-800">Hiragana Practice</h1>
+        <div id="user-info" class="text-center mb-4 text-gray-600"></div>
+        <div id="score" class="text-center mb-4 text-lg font-semibold text-gray-700">
+            Score: <span id="current-score">0</span>
+        </div>
+        <div id="hiragana" class="text-6xl font-bold text-center mb-6 text-gray-900"></div>
+        <div id="options" class="space-y-3"></div>
+        <div id="feedback" class="text-center mt-4 text-lg"></div>
+        <button id="next-button" class="mt-6 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 hidden">
+            Next
+        </button>
+        <div class="mt-8">
+            <h2 class="text-xl font-semibold text-gray-800">Leaderboard</h2>
+            <ul id="leaderboard" class="mt-2 space-y-2"></ul>
+        </div>
+    </div>
+    <script>
+        // Hiragana data
+        const hiragana = [
+            { char: 'あ', romaji: 'a' }, { char: 'い', romaji: 'i' }, { char: 'う', romaji: 'u' },
+            { char: 'え', romaji: 'e' }, { char: 'お', romaji: 'o' }, { char: 'か', romaji: 'ka' },
+            { char: 'き', romaji: 'ki' }, { char: 'く', romaji: 'ku' }, { char: 'け', romaji: 'ke' },
+            { char: 'こ', romaji: 'ko' }
+        ];
+
+        // Initialize Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        const user = tg.initDataUnsafe.user || { id: 'test_user', first_name: 'Test', last_name: 'User' };
+        document.getElementById('user-info').innerText = `Hello, ${user.first_name}!`;
+
+        // Game state
+        let score = 0;
+        let currentHiragana = null;
+
+        // Load or initialize leaderboard
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || {};
+        if (!leaderboard[user.id]) {
+            leaderboard[user.id] = { name: `${user.first_name} ${user.last_name || ''}`, score: 0 };
+        }
+
+        // Update leaderboard display
+        function updateLeaderboard() {
+            const leaderboardEl = document.getElementById('leaderboard');
+            leaderboardEl.innerHTML = '';
+            Object.entries(leaderboard)
+                .sort((a, b) => b[1].score - a[1].score)
+                .slice(0, 5)
+                .forEach(([id, data]) => {
+                    const li = document.createElement('li');
+                    li.className = 'bg-gray-50 p-2 rounded flex justify-between';
+                    li.innerHTML = `<span>${data.name}</span><span>${data.score}</span>`;
+                    leaderboardEl.appendChild(li);
+                });
+        }
+
+        // Save leaderboard
+        function saveLeaderboard() {
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            updateLeaderboard();
+        }
+
+        // Generate question
+        function generateQuestion() {
+            currentHiragana = hiragana[Math.floor(Math.random() * hiragana.length)];
+            document.getElementById('hiragana').innerText = currentHiragana.char;
+
+            // Generate options
+            const options = [currentHiragana.romaji];
+            while (options.length < 3) {
+                const randomHiragana = hiragana[Math.floor(Math.random() * hiragana.length)].romaji;
+                if (!options.includes(randomHiragana)) {
+                    options.push(randomHiragana);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            // Display options
+            const optionsEl = document.getElementById('options');
+            optionsEl.innerHTML = '';
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-button w-full bg-gray-200 py-2 rounded-lg text-lg hover:bg-gray-300';
+                button.innerText = option;
+                button.onclick = () => checkAnswer(option, button);
+                optionsEl.appendChild(button);
+            });
+
+            document.getElementById('feedback').innerText = '';
+            document.getElementById('next-button').classList.add('hidden');
+        }
+
+        // Check answer
+        function checkAnswer(selected, button) {
+            const feedbackEl = document.getElementById('feedback');
+            const nextButton = document.getElementById('next-button');
+            if (selected === currentHiragana.romaji) {
+                score += 10;
+                feedbackEl.innerText = 'Correct!';
+                feedbackEl.className = 'text-center mt-4 text-lg text-green-600';
+                button.classList.add('correct');
+                leaderboard[user.id].score = Math.max(leaderboard[user.id].score, score);
+                saveLeaderboard();
+            } else {
+                score = Math.max(0, score - 5);
+                feedbackEl.innerText = `Incorrect! It's ${currentHiragana.romaji}.`;
+                feedbackEl.className = 'text-center mt-4 text-lg text-red-600';
+                button.classList.add('incorrect');
+            }
+            document.getElementById('current-score').innerText = score;
+            nextButton.classList.remove('hidden');
+            document.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
+        }
+
+        // Next question
+        document.getElementById('next-button').onclick = generateQuestion;
+
+        // Initial setup
+        updateLeaderboard();
+        generateQuestion();
+
+        // Expand Telegram Web App
+        tg.expand();
+    </script>
+</body>
+</html>
