@@ -97,9 +97,12 @@
                     // File doesn't exist, create it
                     leaderboard = {};
                     await saveLeaderboard();
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
                 }
             } catch (error) {
-                console.error('Error fetching leaderboard:', error);
+                console.error('Error fetching leaderboard:', error.message);
+                document.getElementById('feedback').innerText = 'Failed to load leaderboard. Please try again.';
             }
         }
 
@@ -123,7 +126,7 @@
                         sha = data.sha;
                     }
                 } catch (error) {
-                    // File may not exist, proceed without SHA
+                    console.warn('File may not exist, proceeding without SHA:', error.message);
                 }
 
                 // Update file
@@ -143,13 +146,37 @@
                         })
                     }
                 );
-                if (response.ok) {
-                    updateLeaderboard();
-                } else {
-                    console.error('Error saving leaderboard:', await response.text());
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
                 }
+                updateLeaderboard();
             } catch (error) {
-                console.error('Error saving leaderboard:', error);
+                console.error('Error saving leaderboard:', error.message);
+                document.getElementById('feedback').innerText = 'Failed to save score. Please try again.';
+                // Retry without SHA if conflict
+                if (error.message.includes('422') || error.message.includes('sha')) {
+                    console.warn('Retrying without SHA due to possible conflict');
+                    try {
+                        const content = btoa(JSON.stringify(leaderboard, null, 2));
+                        await fetch(
+                            `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`,
+                            {
+                                method: 'PUT',
+                                headers: {
+                                    'Authorization': `token ${GITHUB_TOKEN}`,
+                                    'Accept': 'application/vnd.github.v3+json'
+                                },
+                                body: JSON.stringify({
+                                    message: `Update leaderboard for user ${user.id} (retry)`,
+                                    content: content
+                                })
+                            }
+                        );
+                    } catch (retryError) {
+                        console.error('Retry failed:', retryError.message);
+                    }
+                }
             }
         }
 
