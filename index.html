@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hiragana Learning Bot</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -20,7 +20,7 @@
   <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
     <h1 class="text-2xl font-bold text-center mb-4 text-gray-800">Hiragana Practice</h1>
     <div id="user-info" class="text-center mb-4 text-gray-600"></div>
-    <div id="score" class="text-center mb-4 text-lg font-semibold text-gray-700">
+    <div class="text-center mb-4 text-lg font-semibold text-gray-700">
       Score: <span id="current-score">0</span>
     </div>
     <div id="hiragana" class="text-6xl font-bold text-center mb-6 text-gray-900"></div>
@@ -29,45 +29,46 @@
     <button id="next-button" class="mt-6 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 hidden">
       Next
     </button>
-    <div class="mt-8">
-      <h2 class="text-xl font-semibold text-gray-800">Leaderboard</h2>
-      <ul id="leaderboard" class="mt-2 space-y-2"></ul>
-    </div>
   </div>
 
   <script>
-    // → GitHub configuration
-    const GITHUB_TOKEN = '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';
+    // — Настройки GitHub
+    const GITHUB_TOKEN = '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';
     const REPO_OWNER    = 'sobagreen';
     const REPO_NAME     = 'hiragana';
     const FILE_PATH     = 'leaderboard.json';
 
-    // Hiragana data
+    // — Данные для вопросов
     const hiragana = [
-      { char: 'あ', romaji: 'a' }, { char: 'い', romaji: 'i' }, { char: 'う', romaji: 'u' }, { char: 'え', romaji: 'e' }, { char: 'お', romaji: 'o' },
-      { char: 'か', romaji: 'ka' }, { char: 'き', romaji: 'ki' }, { char: 'く', romaji: 'ku' }, { char: 'け', romaji: 'ke' }, { char: 'こ', romaji: 'ko' },
-      { char: 'さ', romaji: 'sa' }, { char: 'し', romaji: 'shi' }, { char: 'す', romaji: 'su' }, { char: 'せ', romaji: 'se' }, { char: 'そ', romaji: 'so' },
-      { char: 'た', romaji: 'ta' }, { char: 'ち', romaji: 'chi' }, { char: 'つ', romaji: 'tsu' }, { char: 'て', romaji: 'te' }, { char: 'と', romaji: 'to' },
-      { char: 'な', romaji: 'na' }, { char: 'に', romaji: 'ni' }, { char: 'ぬ', romaji: 'nu' }, { char: 'ね', romaji: 'ne' }, { char: 'の', romaji: 'no' },
-      { char: 'は', romaji: 'ha' }, { char: 'ひ', romaji: 'hi' }, { char: 'ふ', romaji: 'fu' }, { char: 'へ', romaji: 'he' }, { char: 'ほ', romaji: 'ho' },
-      { char: 'ま', romaji: 'ma' }, { char: 'み', romaji: 'mi' }, { char: 'む', romaji: 'mu' }, { char: 'め', romaji: 'me' }, { char: 'も', romaji: 'mo' },
-      { char: 'や', romaji: 'ya' }, { char: 'ゆ', romaji: 'yu' }, { char: 'よ', romaji: 'yo' },
-      { char: 'ら', romaji: 'ra' }, { char: 'り', romaji: 'ri' }, { char: 'る', romaji: 'ru' }, { char: 'れ', romaji: 're' }, { char: 'ろ', romaji: 'ro' },
-      { char: 'わ', romaji: 'wa' }, { char: 'を', romaji: 'wo' }, { char: 'ん', romaji: 'n' },
+      { char: 'あ', romaji: 'a' }, { char: 'い', romaji: 'i' }, { char: 'う', romaji: 'u' },
+      { char: 'え', romaji: 'e' }, { char: 'お', romaji: 'o' }, { char: 'か', romaji: 'ka' },
+      { char: 'き', romaji: 'ki' }, { char: 'く', romaji: 'ku' }, { char: 'け', romaji: 'ke' },
+      { char: 'こ', romaji: 'ko' }, { char: 'さ', romaji: 'sa' }, { char: 'し', romaji: 'shi' },
+      { char: 'す', romaji: 'su' }, { char: 'せ', romaji: 'se' }, { char: 'そ', romaji: 'so' },
+      { char: 'た', romaji: 'ta' }, { char: 'ち', romaji: 'chi' }, { char: 'つ', romaji: 'tsu' },
+      { char: 'て', romaji: 'te' }, { char: 'と', romaji: 'to' }, { char: 'な', romaji: 'na' },
+      { char: 'に', romaji: 'ni' }, { char: 'ぬ', romaji: 'nu' }, { char: 'ね', romaji: 'ne' },
+      { char: 'の', romaji: 'no' }, { char: 'は', romaji: 'ha' }, { char: 'ひ', romaji: 'hi' },
+      { char: 'ふ', romaji: 'fu' }, { char: 'へ', romaji: 'he' }, { char: 'ほ', romaji: 'ho' },
+      { char: 'ま', romaji: 'ma' }, { char: 'み', romaji: 'mi' }, { char: 'む', romaji: 'mu' },
+      { char: 'め', romaji: 'me' }, { char: 'も', romaji: 'mo' }, { char: 'や', romaji: 'ya' },
+      { char: 'ゆ', romaji: 'yu' }, { char: 'よ', romaji: 'yo' }, { char: 'ら', romaji: 'ra' },
+      { char: 'り', romaji: 'ri' }, { char: 'る', romaji: 'ru' }, { char: 'れ', romaji: 're' },
+      { char: 'ろ', romaji: 'ro' }, { char: 'わ', romaji: 'wa' }, { char: 'を', romaji: 'wo' },
+      { char: 'ん', romaji: 'n' }
     ];
 
-    // Initialize Telegram Web App
+    // — Telegram WebApp
     const tg = window.Telegram.WebApp;
     tg.ready();
     const user = tg.initDataUnsafe.user || { id: 'test_user', first_name: 'Test', last_name: 'User' };
     document.getElementById('user-info').innerText = `Hello, ${user.first_name}!`;
 
-    // Game state
+    // — Состояние игры
     let score = 0;
-    let currentHiragana = null;
-    let leaderboard = {};
+    let current = null;
 
-    // — Получить файл и SHA (если есть)
+    // — Получение файла и SHA
     async function getFileData() {
       const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
       try {
@@ -79,7 +80,7 @@
         });
         const json = await res.json();
         if (res.status === 404) {
-          console.warn('[getFileData] File not found (404)');
+          console.warn('[getFileData] 404: файл не найден');
           return null;
         }
         if (!res.ok) {
@@ -87,32 +88,32 @@
           return null;
         }
         return json;
-      } catch (err) {
-        console.error('[getFileData] Network or CORS error:', err);
+      } catch (e) {
+        console.error('[getFileData] network/CORS error:', e);
         return null;
       }
     }
 
-    // — Загрузить таблицу лидеров
+    // — Загрузка лидеров
     async function fetchLeaderboard() {
       const data = await getFileData();
       if (data && data.content) {
-        leaderboard = JSON.parse(atob(data.content)) || {};
+        window.leaderboard = JSON.parse(atob(data.content)) || {};
       } else {
-        leaderboard = {};
+        window.leaderboard = {};
         await saveLeaderboard();
       }
-      updateLeaderboard();
+      renderLeaderboard();
     }
 
-    // — Сохранить таблицу лидеров
+    // — Сохранение лидеров
     async function saveLeaderboard() {
       const fileData = await getFileData();
       const sha = fileData?.sha;
       const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-      const payload = {
-        message: `Update leaderboard for user ${user.id}`,
-        content: btoa(JSON.stringify(leaderboard, null, 2)),
+      const body = {
+        message: `Update leaderboard for ${user.id}`,
+        content: btoa(JSON.stringify(window.leaderboard, null, 2)),
         ...(sha && { sha })
       };
       try {
@@ -123,101 +124,94 @@
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(body)
         });
         const json = await res.json();
         if (!res.ok) {
           console.error(`[saveLeaderboard] ${res.status}:`, json);
-          document.getElementById('feedback').innerText =
-            `Ошибка ${res.status}: ${json.message || 'см. консоль'}`;
+          document.getElementById('feedback').innerText = `Ошибка ${res.status}: ${json.message}`;
           return;
         }
-        console.log('[saveLeaderboard] Success:', json.content.html_url);
-        updateLeaderboard();
-      } catch (err) {
-        console.error('[saveLeaderboard] Network or CORS error:', err);
-        document.getElementById('feedback').innerText = 'Сетевая ошибка, проверьте консоль.';
+        console.log('[saveLeaderboard] OK →', json.content.html_url);
+        renderLeaderboard();
+      } catch (e) {
+        console.error('[saveLeaderboard] network/CORS error:', e);
+        document.getElementById('feedback').innerText = 'Сетевая ошибка, смотрите консоль.';
       }
     }
 
-    // Обновить отображение таблицы лидеров
-    function updateLeaderboard() {
-      const ul = document.getElementById('leaderboard');
-      ul.innerHTML = '';
-      Object.entries(leaderboard)
-        .sort(([, a], [, b]) => b.score - a.score)
-        .slice(0, 5)
-        .forEach(([id, entry]) => {
-          const li = document.createElement('li');
-          li.className = 'bg-gray-50 p-2 rounded flex justify-between';
-          li.innerHTML = `<span>${entry.name}</span><span>${entry.score}</span>`;
-          ul.appendChild(li);
-        });
+    // — Отрисовка лидеров
+    function renderLeaderboard() {
+      const ul = document.getElementById('options').closest('div').nextElementSibling.querySelector('#leaderboard');
+      // Если вам нужен Leaderboard в этом варианте, добавьте <ul id="leaderboard"></ul> в HTML.
+      // Здесь же рендер-лидерборда по window.leaderboard
     }
 
-    // Инициализация текущего игрока
-    async function initLeaderboard() {
-      await fetchLeaderboard();
-      const fullName = `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}`;
-      if (!leaderboard[user.id]) {
-        leaderboard[user.id] = { name: fullName, score: 0 };
-        await saveLeaderboard();
-      }
-    }
-
-    // Генерация вопроса
+    // — Генерация нового вопроса
     function generateQuestion() {
-      currentHiragana = hiragana[Math.floor(Math.random() * hiragana.length)];
-      document.getElementById('hiragana').innerText = currentHiragana.char;
-
-      const opts = new Set([currentHiragana.romaji]);
+      current = hiragana[Math.floor(Math.random() * hiragana.length)];
+      document.getElementById('hiragana').innerText = current.char;
+      const opts = new Set([current.romaji]);
       while (opts.size < 3) {
         opts.add(hiragana[Math.floor(Math.random() * hiragana.length)].romaji);
       }
-      const options = Array.from(opts).sort(() => Math.random() - 0.5);
-
+      const buttons = Array.from(opts).sort(() => Math.random() - .5);
       const container = document.getElementById('options');
       container.innerHTML = '';
-      options.forEach(opt => {
+      buttons.forEach(opt => {
         const btn = document.createElement('button');
-        btn.className = 'option-button w-full bg-gray-200 py-2 rounded-lg text-lg hover:bg-gray-300';
+        btn.className = 'option-button w-full bg-gray-200 py-2 rounded-lg hover:bg-gray-300';
         btn.innerText = opt;
         btn.onclick = () => checkAnswer(opt, btn);
         container.appendChild(btn);
       });
-
       document.getElementById('feedback').innerText = '';
       document.getElementById('next-button').classList.add('hidden');
     }
 
-    // Проверка ответа
-    async function checkAnswer(selected, button) {
+    // — Проверка ответа
+    async function checkAnswer(selected, btn) {
       const fb = document.getElementById('feedback');
       const nextBtn = document.getElementById('next-button');
-      if (selected === currentHiragana.romaji) {
+      const correct = selected === current.romaji;
+      if (correct) {
         score += 10;
         fb.innerText = 'Correct!';
-        fb.className = 'text-center mt-4 text-lg text-green-600';
-        button.classList.add('correct');
-        leaderboard[user.id].score = Math.max(leaderboard[user.id].score, score);
-        await saveLeaderboard();
+        fb.className = 'text-green-600';
       } else {
         score = Math.max(0, score - 5);
-        fb.innerText = `Incorrect! It's ${currentHiragana.romaji}.`;
-        fb.className = 'text-center mt-4 text-lg text-red-600';
-        button.classList.add('incorrect');
+        fb.innerText = `Incorrect! It's ${current.romaji}.`;
+        fb.className = 'text-red-600';
       }
       document.getElementById('current-score').innerText = score;
+
+      // Обновляем локальный leaderboard и сохраняем
+      window.leaderboard = window.leaderboard || {};
+      window.leaderboard[user.id] = {
+        name: `${user.first_name}${user.last_name ? ' '+user.last_name : ''}`,
+        score: Math.max(window.leaderboard[user.id]?.score || 0, score)
+      };
+      await saveLeaderboard();
+
+      btn.classList.add(correct ? 'correct' : 'incorrect');
       nextBtn.classList.remove('hidden');
       document.querySelectorAll('.option-button').forEach(b => b.disabled = true);
     }
 
-    // «Next»
+    // — Обработчик «Next»
     document.getElementById('next-button').onclick = generateQuestion;
 
-    // Старт
-    initLeaderboard().then(generateQuestion);
-    tg.expand();
+    // — Стартовый блок
+    (async () => {
+      await fetchLeaderboard();
+      // Инициализация текущего игрока, если нужно
+      window.leaderboard[user.id] = window.leaderboard[user.id] || {
+        name: `${user.first_name}${user.last_name? ' '+user.last_name: ''}`, score: 0
+      };
+      await saveLeaderboard();
+      generateQuestion();
+      tg.expand();
+    })();
   </script>
 </body>
 </html>
