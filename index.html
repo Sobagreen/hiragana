@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hiragana Practice</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js "></script>
+  <script src="https://cdn.tailwindcss.com "></script>
   <style>
     body { font-family: Arial, sans-serif; }
     .option-button { transition: transform .2s; }
@@ -49,17 +49,17 @@
     // — Игра
     const hiragana = [
       {char:'あ',romaji:'a'},{char:'い',romaji:'i'},{char:'う',romaji:'u'},
-      /* …весь набор… */{char:'ん',romaji:'n'}
+      {char:'ん',romaji:'n'}
     ];
     let score = 0, current = null, leaderboard = {};
 
     // — Получаем файл (или null, если нет)
     async function getFileData() {
-      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+      const url = `https://api.github.com/repos/ ${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
       const res = await fetch(url, {
         headers: {
           'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept':        'application/vnd.github.v3+json'
+          'Accept': 'application/vnd.github.v3+json'
         }
       });
       if (res.status === 404) return null;
@@ -85,7 +85,7 @@
     async function saveLeaderboard() {
       const fileData = await getFileData();
       const sha = fileData?.sha;
-      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+      const url = `https://api.github.com/repos/ ${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
       const body = {
         message: `Update leaderboard`,
         content: btoa(JSON.stringify(leaderboard, null, 2)),
@@ -96,8 +96,8 @@
         method: 'PUT',
         headers: {
           'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept':        'application/vnd.github.v3+json',
-          'Content-Type':  'application/json'
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(body)
       });
@@ -113,17 +113,17 @@
       current = hiragana[Math.floor(Math.random()*hiragana.length)];
       document.getElementById('hiragana').innerText = current.char;
       const opts = new Set([current.romaji]);
-      while (opts.size<3) opts.add(hiragana[Math.floor(Math.random()*hiragana.length)].romaji);
-      const buttons = Array.from(opts).sort(()=>Math.random()-0.5);
+      while (opts.size < 3) opts.add(hiragana[Math.floor(Math.random()*hiragana.length)].romaji);
+      const buttons = Array.from(opts).sort(() => Math.random() - 0.5);
       const c = document.getElementById('options'); c.innerHTML = '';
-      buttons.forEach(opt=>{
+      buttons.forEach(opt => {
         const b = document.createElement('button');
-        b.className='option-button w-full bg-gray-200 py-2 rounded-lg';
-        b.innerText=opt;
-        b.onclick=()=>checkAnswer(opt,b);
+        b.className = 'option-button w-full bg-gray-200 py-2 rounded-lg';
+        b.innerText = opt;
+        b.addEventListener('click', async () => await checkAnswer(opt, b)); // <-- async click handler
         c.appendChild(b);
       });
-      document.getElementById('feedback').innerText='';
+      document.getElementById('feedback').innerText = '';
       document.getElementById('next-button').classList.add('hidden');
     }
 
@@ -131,27 +131,37 @@
     async function checkAnswer(sel, btn) {
       const fb = document.getElementById('feedback');
       const next = document.getElementById('next-button');
-      const ok = sel===current.romaji;
-      if (ok) { score+=10; fb.innerText='Correct!'; fb.className='text-green-600'; }
-      else  { score=Math.max(0,score-5); fb.innerText=`Incorrect! It's ${current.romaji}.`; fb.className='text-red-600'; }
-      document.getElementById('current-score').innerText=score;
+      const ok = sel === current.romaji;
+
+      if (ok) {
+        score += 10;
+        fb.innerText = 'Correct!';
+        fb.className = 'text-green-600';
+      } else {
+        score = Math.max(0, score - 5);
+        fb.innerText = `Incorrect! It's ${current.romaji}.`;
+        fb.className = 'text-red-600';
+      }
+
+      document.getElementById('current-score').innerText = score;
 
       // Обновляем локально и пушим
       leaderboard[user.id] = {
-        name: `${user.first_name}${user.last_name?' '+user.last_name:''}`,
-        score: Math.max(leaderboard[user.id]?.score||0, score)
+        name: `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}`,
+        score: Math.max(leaderboard[user.id]?.score || 0, score)
       };
-      await saveLeaderboard();
 
-      btn.classList.add(ok?'correct':'incorrect');
+      await saveLeaderboard(); // <-- await гарантирует завершение запроса
+
+      btn.classList.add(ok ? 'correct' : 'incorrect');
       next.classList.remove('hidden');
-      document.querySelectorAll('.option-button').forEach(b=>b.disabled=true);
+      document.querySelectorAll('.option-button').forEach(b => b.disabled = true);
     }
 
     document.getElementById('next-button').onclick = generateQuestion;
 
     // — Запуск
-    (async()=>{
+    (async () => {
       await fetchLeaderboard();
       generateQuestion();
       tg.expand();
