@@ -16,8 +16,10 @@
     @keyframes flash-red   { from {background:#ef4444;} to {background:#fff;} }
     .timer { width: 100%; height: 5px; background-color: #e5e7eb; margin-bottom: 1rem; }
     .timer-progress { height: 100%; background-color: #3b82f6; width: 100%; transition: width 1s linear; }
-    .achievement { opacity: 0.3; transition: opacity 0.3s; }
-    .achievement.unlocked { opacity: 1; }
+    .achievement { opacity: 0.5; transition: all 0.3s; transform: scale(0.95); }
+    .achievement.unlocked { opacity: 1; transform: scale(1); }
+    .achievement img { filter: grayscale(100%); transition: filter 0.3s; }
+    .achievement.unlocked img { filter: grayscale(0%); }
   </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -67,26 +69,31 @@
     <!-- Экран достижений -->
     <div id="achievements-screen" class="hidden text-center">
       <h2 class="text-xl font-bold mb-4">Достижения</h2>
-      <div id="achievements-list" class="space-y-4 mb-6">
+      <div id="achievements-list" class="grid grid-cols-2 gap-4 mb-6">
         <div class="achievement" data-threshold="5">
-          <p class="font-semibold">🎖️ Новичок</p>
-          <p>Открой 5 символов</p>
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/1.png" class="w-24 h-24 mx-auto mb-2">
+          <p class="font-semibold">Новичок</p>
+          <p>5 символов</p>
         </div>
         <div class="achievement" data-threshold="10">
-          <p class="font-semibold">🏅 Ученик</p>
-          <p>Открой 10 символов</p>
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/2.png" class="w-24 h-24 mx-auto mb-2">
+          <p class="font-semibold">Ученик</p>
+          <p>10 символов</p>
         </div>
         <div class="achievement" data-threshold="20">
-          <p class="font-semibold">🥉 Знаток</p>
-          <p>Открой 20 символов</p>
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/3.png" class="w-24 h-24 mx-auto mb-2">
+          <p class="font-semibold">Знаток</p>
+          <p>20 символов</p>
         </div>
         <div class="achievement" data-threshold="35">
-          <p class="font-semibold">🥈 Мастер</p>
-          <p>Открой 35 символов</p>
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/4.png" class="w-24 h-24 mx-auto mb-2">
+          <p class="font-semibold">Мастер</p>
+          <p>35 символов</p>
         </div>
         <div class="achievement" data-threshold="46">
-          <p class="font-semibold">🥇 Гуру</p>
-          <p>Открой все 46 символов</p>
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/5.png" class="w-24 h-24 mx-auto mb-2">
+          <p class="font-semibold">Гуру</p>
+          <p>46 символов</p>
         </div>
       </div>
       <button id="back-to-menu" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600">
@@ -100,13 +107,6 @@
     const tg = window.Telegram.WebApp;
     tg.ready();
     const user = tg.initDataUnsafe.user || { id: 'test', first_name: 'Test' };
-
-    // — GitHub API (ЗАМЕНИТЕ НА СВОЙ ТОКЕН И РЕПО!)
-    const GITHUB_TOKEN = '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';
-    const REPO_OWNER = 'sobagreen';
-    const REPO_NAME = 'hiragana';
-    const STATS_FILE = 'hiragana_stats.json';
-    const BRANCH = 'main';
 
     // — Все символы хираганы (46 основных)
     const hiragana = [
@@ -128,68 +128,141 @@
       { char: 'ん', romaji: 'n' }
     ];
 
+    // — Игровые переменные
     let current = null;
     let correctAnswers = 0;
     let incorrectAnswers = 0;
     let timeLeft = 30;
     let timer;
-    let userStats = {};
+    let unlockedChars = 0; // Для теста (в реальном коде загружайте из GitHub)
 
-    // — Загрузка статистики игрока
-    async function loadUserStats() {
-      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${STATS_FILE}`;
-      try {
-        const res = await fetch(url, {
-          headers: {
-            'Authorization': `token ${GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        if (res.status === 404) {
-          userStats = {};
-          return;
-        }
-        const data = await res.json();
-        userStats = JSON.parse(atob(data.content));
-      } catch (error) {
-        console.error("Ошибка загрузки статистики:", error);
-        userStats = {};
-      }
+    // — Элементы интерфейса
+    const mainMenu = document.getElementById('main-menu');
+    const gameScreen = document.getElementById('game-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const achievementsScreen = document.getElementById('achievements-screen');
+    const startGameBtn = document.getElementById('start-game');
+    const showAchievementsBtn = document.getElementById('show-achievements');
+    const playAgainBtn = document.getElementById('play-again');
+    const exitGameBtn = document.getElementById('exit-game');
+    const backToMenuBtn = document.getElementById('back-to-menu');
+    const timerProgress = document.getElementById('timer-progress');
+
+    // — Обработчики кнопок
+    startGameBtn.addEventListener('click', startGame);
+    showAchievementsBtn.addEventListener('click', showAchievements);
+    playAgainBtn.addEventListener('click', startGame);
+    exitGameBtn.addEventListener('click', () => {
+      resultScreen.classList.add('hidden');
+      mainMenu.classList.remove('hidden');
+    });
+    backToMenuBtn.addEventListener('click', () => {
+      achievementsScreen.classList.add('hidden');
+      mainMenu.classList.remove('hidden');
+    });
+
+    // — Запуск игры
+    function startGame() {
+      // Сброс статистики
+      correctAnswers = 0;
+      incorrectAnswers = 0;
+      timeLeft = 30;
+      document.getElementById('correct-count').innerText = '0';
+      document.getElementById('incorrect-count').innerText = '0';
+
+      // Переключение экранов
+      mainMenu.classList.add('hidden');
+      resultScreen.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+
+      // Запуск таймера
+      startTimer();
+      generateQuestion();
     }
 
-    // — Сохранение статистики
-    async function saveUserStats() {
-      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${STATS_FILE}`;
-      const statsBlob = await fetch(url, {
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json'
+    // — Таймер
+    function startTimer() {
+      clearInterval(timer);
+      timerProgress.style.width = '100%';
+      timeLeft = 30;
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timerProgress.style.width = `${(timeLeft / 30) * 100}%`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          endGame();
         }
-      }).then(res => res.ok ? res.json() : null);
+      }, 1000);
+    }
 
-      const body = {
-        message: `Update stats for ${user.id}`,
-        content: btoa(JSON.stringify(userStats, null, 2)),
-        branch: BRANCH,
-        sha: statsBlob?.sha
-      };
+    // — Генерация вопроса
+    function generateQuestion() {
+      current = hiragana[Math.floor(Math.random() * hiragana.length)];
+      document.getElementById('hiragana').innerText = current.char;
 
-      await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
+      const options = new Set([current.romaji]);
+      while (options.size < 3) {
+        const randomChar = hiragana[Math.floor(Math.random() * hiragana.length)];
+        options.add(randomChar.romaji);
+      }
+
+      const optionsContainer = document.getElementById('options');
+      optionsContainer.innerHTML = '';
+      Array.from(options).sort(() => Math.random() - 0.5).forEach(opt => {
+        const button = document.createElement('button');
+        button.className = 'option-button w-full bg-gray-200 py-2 rounded-lg';
+        button.textContent = opt;
+        button.addEventListener('click', () => checkAnswer(opt, button));
+        optionsContainer.appendChild(button);
       });
+
+      document.getElementById('feedback').textContent = '';
+    }
+
+    // — Проверка ответа
+    function checkAnswer(selected, button) {
+      const feedback = document.getElementById('feedback');
+      const isCorrect = selected === current.romaji;
+
+      if (isCorrect) {
+        correctAnswers++;
+        feedback.textContent = 'Правильно!';
+        feedback.className = 'text-center mt-4 text-lg text-green-600';
+        unlockedChars++; // Для теста (в реальном коде обновляйте через GitHub API)
+      } else {
+        incorrectAnswers++;
+        feedback.textContent = `Неправильно! Правильно: ${current.romaji}`;
+        feedback.className = 'text-center mt-4 text-lg text-red-600';
+      }
+
+      document.getElementById('correct-count').textContent = correctAnswers;
+      document.getElementById('incorrect-count').textContent = incorrectAnswers;
+
+      button.classList.add(isCorrect ? 'correct' : 'incorrect');
+      document.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
+
+      setTimeout(generateQuestion, 1000);
+    }
+
+    // — Завершение игры
+    function endGame() {
+      document.getElementById('final-correct').textContent = correctAnswers;
+      document.getElementById('final-incorrect').textContent = incorrectAnswers;
+      gameScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+    }
+
+    // — Показ достижений
+    function showAchievements() {
+      mainMenu.classList.add('hidden');
+      achievementsScreen.classList.remove('hidden');
+      checkAchievements();
     }
 
     // — Проверка достижений
     function checkAchievements() {
-      const unlockedChars = Object.values(userStats[user.id]?.chars || {})
-        .filter(count => count >= 3).length;
-
       document.querySelectorAll('.achievement').forEach(ach => {
         const threshold = parseInt(ach.dataset.threshold);
         if (unlockedChars >= threshold) {
@@ -200,11 +273,7 @@
       });
     }
 
-    // — Остальной код (как в предыдущем примере) + вызовы:
-    // loadUserStats() при старте,
-    // обновление userStats в checkAnswer(),
-    // вызов checkAchievements() после загрузки статистики.
-
+    // — Инициализация
     tg.expand();
   </script>
 </body>
