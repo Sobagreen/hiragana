@@ -221,6 +221,81 @@
 
     // — Остальные функции (generateQuestion, checkAnswer, endGame) остаются без изменений
     // ... (используйте код из предыдущего примера)
+    // — Генерация вопроса
+    function generateQuestion() {
+      current = hiragana[Math.floor(Math.random() * hiragana.length)];
+      document.getElementById('hiragana').innerText = current.char;
+
+      const options = new Set([current.romaji]);
+      while (options.size < 3) {
+        const randomChar = hiragana[Math.floor(Math.random() * hiragana.length)];
+        options.add(randomChar.romaji);
+      }
+
+      const optionsContainer = document.getElementById('options');
+      optionsContainer.innerHTML = '';
+      Array.from(options).sort(() => Math.random() - 0.5).forEach(opt => {
+        const button = document.createElement('button');
+        button.className = 'option-button w-full bg-gray-200 py-2 rounded-lg';
+        button.textContent = opt;
+        button.addEventListener('click', () => checkAnswer(opt, button));
+        optionsContainer.appendChild(button);
+      });
+
+      document.getElementById('feedback').textContent = '';
+    }
+
+    // — Проверка ответа
+    function checkAnswer(selected, button) {
+      const feedback = document.getElementById('feedback');
+      const isCorrect = selected === current.romaji;
+
+      if (isCorrect) {
+        correctAnswers++;
+        feedback.textContent = 'Правильно!';
+        feedback.className = 'text-center mt-4 text-lg text-green-600';
+        unlockedChars++; // Для теста (в реальном коде обновляйте через GitHub API)
+      } else {
+        incorrectAnswers++;
+        feedback.textContent = `Неправильно! Правильно: ${current.romaji}`;
+        feedback.className = 'text-center mt-4 text-lg text-red-600';
+      }
+
+      document.getElementById('correct-count').textContent = correctAnswers;
+      document.getElementById('incorrect-count').textContent = incorrectAnswers;
+
+      button.classList.add(isCorrect ? 'correct' : 'incorrect');
+      document.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
+
+      setTimeout(generateQuestion, 1000);
+    }
+
+    // — Завершение игры
+    function endGame() {
+      document.getElementById('final-correct').textContent = correctAnswers;
+      document.getElementById('final-incorrect').textContent = incorrectAnswers;
+      gameScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+    }
+
+    // — Показ достижений
+    function showAchievements() {
+      mainMenu.classList.add('hidden');
+      achievementsScreen.classList.remove('hidden');
+      checkAchievements();
+    }
+
+    // — Проверка достижений
+    function checkAchievements() {
+      document.querySelectorAll('.achievement').forEach(ach => {
+        const threshold = parseInt(ach.dataset.threshold);
+        if (unlockedChars >= threshold) {
+          ach.classList.add('unlocked');
+        } else {
+          ach.classList.remove('unlocked');
+        }
+      });
+    }
 
     // — Инициализация
     tg.expand();
