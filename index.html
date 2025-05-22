@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hiragana Practice</title>
-  <script src="https://telegram.org/js/telegram-web-app.js "></script>
-  <script src="https://cdn.tailwindcss.com "></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: Arial, sans-serif; }
     .option-button { transition: transform .2s; }
@@ -14,158 +14,214 @@
     .incorrect { animation: flash-red .5s; }
     @keyframes flash-green { from {background:#34d399;} to {background:#fff;} }
     @keyframes flash-red   { from {background:#ef4444;} to {background:#fff;} }
+    .timer {
+      width: 100%;
+      height: 5px;
+      background-color: #e5e7eb;
+      margin-bottom: 1rem;
+    }
+    .timer-progress {
+      height: 100%;
+      background-color: #3b82f6;
+      width: 100%;
+      transition: width 1s linear;
+    }
   </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
   <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-    <h1 class="text-2xl font-bold text-center mb-4">Hiragana Practice</h1>
-    <div id="user-info" class="text-center mb-4 text-gray-600"></div>
-    <div class="text-center mb-4">
-      Score: <span id="current-score" class="font-semibold">0</span>
+    <!-- Главное меню -->
+    <div id="main-menu" class="text-center">
+      <h1 class="text-2xl font-bold text-center mb-6">Hiragana Practice</h1>
+      <button id="start-game" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 mb-4 text-lg">
+        Начать игру
+      </button>
     </div>
-    <div id="hiragana" class="text-6xl font-bold text-center mb-6"></div>
-    <div id="options" class="space-y-3"></div>
-    <div id="feedback" class="text-center mt-4 text-lg"></div>
-    <button id="next-button"
-            class="mt-6 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 hidden">
-      Next
-    </button>
+
+    <!-- Игровой экран (изначально скрыт) -->
+    <div id="game-screen" class="hidden">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          Правильно: <span id="correct-count" class="font-semibold">0</span>
+        </div>
+        <div>
+          Неправильно: <span id="incorrect-count" class="font-semibold">0</span>
+        </div>
+      </div>
+      <div class="timer">
+        <div id="timer-progress" class="timer-progress"></div>
+      </div>
+      <div id="hiragana" class="text-6xl font-bold text-center mb-6"></div>
+      <div id="options" class="space-y-3"></div>
+      <div id="feedback" class="text-center mt-4 text-lg"></div>
+    </div>
+
+    <!-- Экран результатов (изначально скрыт) -->
+    <div id="result-screen" class="hidden text-center">
+      <h2 class="text-xl font-bold mb-4">Результаты</h2>
+      <div class="mb-6">
+        <p>Правильных ответов: <span id="final-correct" class="font-semibold">0</span></p>
+        <p>Неправильных ответов: <span id="final-incorrect" class="font-semibold">0</span></p>
+      </div>
+      <div class="space-y-3">
+        <button id="play-again" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600">
+          Играть снова
+        </button>
+        <button id="exit-game" class="w-full bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600">
+          Выход
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
-    // — Параметры GitHub API
-    const GITHUB_TOKEN = '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';
-    const REPO_OWNER    = 'sobagreen';
-    const REPO_NAME     = 'hiragana';
-    const FILE_PATH     = 'leaderboard.json';
-    const BRANCH        = 'main';
-
     // — Telegram WebApp
     const tg = window.Telegram.WebApp;
     tg.ready();
     const user = tg.initDataUnsafe.user || { id:'test', first_name:'Test', last_name:'' };
-    document.getElementById('user-info').innerText = `Hello, ${user.first_name}!`;
 
     // — Игра
     const hiragana = [
-      {char:'あ',romaji:'a'},{char:'い',romaji:'i'},{char:'う',romaji:'u'},
-      {char:'ん',romaji:'n'}
+      {char:'あ',romaji:'a'}, {char:'い',romaji:'i'}, {char:'う',romaji:'u'},
+      {char:'え',romaji:'e'}, {char:'お',romaji:'o'}, {char:'か',romaji:'ka'},
+      {char:'き',romaji:'ki'}, {char:'く',romaji:'ku'}, {char:'け',romaji:'ke'},
+      {char:'こ',romaji:'ko'}, {char:'ん',romaji:'n'}
     ];
-    let score = 0, current = null, leaderboard = {};
+    
+    let current = null;
+    let correctAnswers = 0;
+    let incorrectAnswers = 0;
+    let timer;
+    let timeLeft = 30;
+    let gameInterval;
 
-    // — Получаем файл (или null, если нет)
-    async function getFileData() {
-      const url = `https://api.github.com/repos/ ${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-      if (res.status === 404) return null;
-      if (!res.ok) {
-        console.error('getFileData:', res.status, await res.text());
-        return null;
-      }
-      return res.json();
-    }
-
-    // — Загрузка лидеров
-    async function fetchLeaderboard() {
-      const data = await getFileData();
-      if (data && data.content) {
-        leaderboard = JSON.parse(atob(data.content));
-      } else {
-        leaderboard = {};
-        await saveLeaderboard();  // создаём новый файл
-      }
-    }
-
-    // — Сохранение лидеров в GitHub
-    async function saveLeaderboard() {
-      const fileData = await getFileData();
-      const sha = fileData?.sha;
-      const url = `https://api.github.com/repos/ ${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-      const body = {
-        message: `Update leaderboard`,
-        content: btoa(JSON.stringify(leaderboard, null, 2)),
-        branch: BRANCH,
-        ...(sha && { sha })
-      };
-      const res = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      });
-      const text = await res.text();
-      if (!res.ok) {
-        console.error('saveLeaderboard:', res.status, text);
-        document.getElementById('feedback').innerText = `Ошибка ${res.status}`;
-      }
-    }
+    // Элементы интерфейса
+    const mainMenu = document.getElementById('main-menu');
+    const gameScreen = document.getElementById('game-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const startGameBtn = document.getElementById('start-game');
+    const playAgainBtn = document.getElementById('play-again');
+    const exitGameBtn = document.getElementById('exit-game');
+    const timerProgress = document.getElementById('timer-progress');
 
     // — Показ вопроса
     function generateQuestion() {
-      current = hiragana[Math.floor(Math.random()*hiragana.length)];
+      current = hiragana[Math.floor(Math.random() * hiragana.length)];
       document.getElementById('hiragana').innerText = current.char;
+      
       const opts = new Set([current.romaji]);
-      while (opts.size < 3) opts.add(hiragana[Math.floor(Math.random()*hiragana.length)].romaji);
+      while (opts.size < 3) {
+        opts.add(hiragana[Math.floor(Math.random() * hiragana.length)].romaji);
+      }
+      
       const buttons = Array.from(opts).sort(() => Math.random() - 0.5);
-      const c = document.getElementById('options'); c.innerHTML = '';
+      const optionsContainer = document.getElementById('options');
+      optionsContainer.innerHTML = '';
+      
       buttons.forEach(opt => {
         const b = document.createElement('button');
         b.className = 'option-button w-full bg-gray-200 py-2 rounded-lg';
         b.innerText = opt;
-        b.addEventListener('click', async () => await checkAnswer(opt, b)); // <-- async click handler
-        c.appendChild(b);
+        b.addEventListener('click', () => checkAnswer(opt, b));
+        optionsContainer.appendChild(b);
       });
+      
       document.getElementById('feedback').innerText = '';
-      document.getElementById('next-button').classList.add('hidden');
     }
 
-    // — Проверка и лог на GitHub
-    async function checkAnswer(sel, btn) {
-      const fb = document.getElementById('feedback');
-      const next = document.getElementById('next-button');
-      const ok = sel === current.romaji;
+    // — Проверка ответа
+    function checkAnswer(selected, button) {
+      const feedback = document.getElementById('feedback');
+      const isCorrect = selected === current.romaji;
 
-      if (ok) {
-        score += 10;
-        fb.innerText = 'Correct!';
-        fb.className = 'text-green-600';
+      if (isCorrect) {
+        correctAnswers++;
+        feedback.innerText = 'Правильно!';
+        feedback.className = 'text-center mt-4 text-lg text-green-600';
       } else {
-        score = Math.max(0, score - 5);
-        fb.innerText = `Incorrect! It's ${current.romaji}.`;
-        fb.className = 'text-red-600';
+        incorrectAnswers++;
+        feedback.innerText = `Неправильно! Правильный ответ: ${current.romaji}`;
+        feedback.className = 'text-center mt-4 text-lg text-red-600';
       }
 
-      document.getElementById('current-score').innerText = score;
+      // Обновляем счетчики
+      document.getElementById('correct-count').innerText = correctAnswers;
+      document.getElementById('incorrect-count').innerText = incorrectAnswers;
 
-      // Обновляем локально и пушим
-      leaderboard[user.id] = {
-        name: `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}`,
-        score: Math.max(leaderboard[user.id]?.score || 0, score)
-      };
-
-      await saveLeaderboard(); // <-- await гарантирует завершение запроса
-
-      btn.classList.add(ok ? 'correct' : 'incorrect');
-      next.classList.remove('hidden');
+      // Подсвечиваем кнопку
+      button.classList.add(isCorrect ? 'correct' : 'incorrect');
+      
+      // Блокируем все кнопки на короткое время
       document.querySelectorAll('.option-button').forEach(b => b.disabled = true);
+      
+      // Через 0.5 секунды генерируем новый вопрос
+      setTimeout(generateQuestion, 500);
     }
 
-    document.getElementById('next-button').onclick = generateQuestion;
-
-    // — Запуск
-    (async () => {
-      await fetchLeaderboard();
+    // — Запуск игры
+    function startGame() {
+      // Сброс статистики
+      correctAnswers = 0;
+      incorrectAnswers = 0;
+      timeLeft = 30;
+      
+      // Обновляем счетчики
+      document.getElementById('correct-count').innerText = '0';
+      document.getElementById('incorrect-count').innerText = '0';
+      
+      // Показываем игровой экран
+      mainMenu.classList.add('hidden');
+      gameScreen.classList.remove('hidden');
+      resultScreen.classList.add('hidden');
+      
+      // Запускаем первый вопрос
       generateQuestion();
-      tg.expand();
-    })();
+      
+      // Запускаем таймер
+      startTimer();
+    }
+
+    // — Таймер игры
+    function startTimer() {
+      // Сброс таймера
+      clearInterval(timer);
+      timerProgress.style.width = '100%';
+      
+      // Обновляем таймер каждую секунду
+      timer = setInterval(() => {
+        timeLeft--;
+        timerProgress.style.width = `${(timeLeft / 30) * 100}%`;
+        
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    // — Завершение игры
+    function endGame() {
+      clearInterval(timer);
+      
+      // Показываем результаты
+      document.getElementById('final-correct').innerText = correctAnswers;
+      document.getElementById('final-incorrect').innerText = incorrectAnswers;
+      
+      // Переключаем экраны
+      gameScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+    }
+
+    // — Обработчики кнопок
+    startGameBtn.addEventListener('click', startGame);
+    playAgainBtn.addEventListener('click', startGame);
+    exitGameBtn.addEventListener('click', () => {
+      gameScreen.classList.add('hidden');
+      resultScreen.classList.add('hidden');
+      mainMenu.classList.remove('hidden');
+    });
+
+    // — Инициализация
+    tg.expand();
   </script>
 </body>
 </html>
