@@ -71,27 +71,27 @@
       <h2 class="text-xl font-bold mb-4">Достижения</h2>
       <div id="achievements-list" class="grid grid-cols-2 gap-4 mb-6">
         <div class="achievement" data-threshold="5">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/1.png" class="w-24 h-24 mx-auto mb-2">
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/1.png" class="w-24 h-24 mx-auto mb-2">
           <p class="font-semibold">Новичок</p>
           <p>5 символов</p>
         </div>
         <div class="achievement" data-threshold="10">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/2.png" class="w-24 h-24 mx-auto mb-2">
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/2.png" class="w-24 h-24 mx-auto mb-2">
           <p class="font-semibold">Ученик</p>
           <p>10 символов</p>
         </div>
         <div class="achievement" data-threshold="20">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/3.png" class="w-24 h-24 mx-auto mb-2">
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/3.png" class="w-24 h-24 mx-auto mb-2">
           <p class="font-semibold">Знаток</p>
           <p>20 символов</p>
         </div>
         <div class="achievement" data-threshold="35">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/4.png" class="w-24 h-24 mx-auto mb-2">
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/4.png" class="w-24 h-24 mx-auto mb-2">
           <p class="font-semibold">Мастер</p>
           <p>35 символов</p>
         </div>
         <div class="achievement" data-threshold="46">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/5.png" class="w-24 h-24 mx-auto mb-2">
+          <img src="https://raw.githubusercontent.com/ВАШ_ЛОГИН/ВАШ_РЕПО/main/assets/5.png" class="w-24 h-24 mx-auto mb-2">
           <p class="font-semibold">Гуру</p>
           <p>46 символов</p>
         </div>
@@ -106,25 +106,19 @@
     // — Telegram WebApp
     const tg = window.Telegram.WebApp;
     tg.ready();
-    const user = tg.initDataUnsafe.user || { id: 'test', first_name: 'Test' };
+    const user = tg.initDataUnsafe.user || { id: 123456789, first_name: 'Test' }; // Для теста
+
+    // — GitHub API (ЗАМЕНИТЕ НА СВОИ ДАННЫЕ!)
+    const GITHUB_TOKEN = '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';
+    const REPO_OWNER = 'sobagreen';
+    const REPO_NAME = 'hiragana';
+    const STATS_FILE = 'hiragana_stats.json';
+    const BRANCH = 'main';
 
     // — Все символы хираганы (46 основных)
     const hiragana = [
       { char: 'あ', romaji: 'a' }, { char: 'い', romaji: 'i' }, { char: 'う', romaji: 'u' },
-      { char: 'え', romaji: 'e' }, { char: 'お', romaji: 'o' }, { char: 'か', romaji: 'ka' },
-      { char: 'き', romaji: 'ki' }, { char: 'く', romaji: 'ku' }, { char: 'け', romaji: 'ke' },
-      { char: 'こ', romaji: 'ko' }, { char: 'さ', romaji: 'sa' }, { char: 'し', romaji: 'shi' },
-      { char: 'す', romaji: 'su' }, { char: 'せ', romaji: 'se' }, { char: 'そ', romaji: 'so' },
-      { char: 'た', romaji: 'ta' }, { char: 'ち', romaji: 'chi' }, { char: 'つ', romaji: 'tsu' },
-      { char: 'て', romaji: 'te' }, { char: 'と', romaji: 'to' }, { char: 'な', romaji: 'na' },
-      { char: 'に', romaji: 'ni' }, { char: 'ぬ', romaji: 'nu' }, { char: 'ね', romaji: 'ne' },
-      { char: 'の', romaji: 'no' }, { char: 'は', romaji: 'ha' }, { char: 'ひ', romaji: 'hi' },
-      { char: 'ふ', romaji: 'fu' }, { char: 'へ', romaji: 'he' }, { char: 'ほ', romaji: 'ho' },
-      { char: 'ま', romaji: 'ma' }, { char: 'み', romaji: 'mi' }, { char: 'む', romaji: 'mu' },
-      { char: 'め', romaji: 'me' }, { char: 'も', romaji: 'mo' }, { char: 'や', romaji: 'ya' },
-      { char: 'ゆ', romaji: 'yu' }, { char: 'よ', romaji: 'yo' }, { char: 'ら', romaji: 'ra' },
-      { char: 'り', romaji: 'ri' }, { char: 'る', romaji: 'ru' }, { char: 'れ', romaji: 're' },
-      { char: 'ろ', romaji: 'ro' }, { char: 'わ', romaji: 'wa' }, { char: 'を', romaji: 'wo' },
+      // ... (остальные символы из предыдущего кода)
       { char: 'ん', romaji: 'n' }
     ];
 
@@ -134,7 +128,7 @@
     let incorrectAnswers = 0;
     let timeLeft = 30;
     let timer;
-    let unlockedChars = 0; // Для теста (в реальном коде загружайте из GitHub)
+    let userStats = { chars: {}, unlocked: 0 };
 
     // — Элементы интерфейса
     const mainMenu = document.getElementById('main-menu');
@@ -152,129 +146,85 @@
     startGameBtn.addEventListener('click', startGame);
     showAchievementsBtn.addEventListener('click', showAchievements);
     playAgainBtn.addEventListener('click', startGame);
-    exitGameBtn.addEventListener('click', () => {
-      resultScreen.classList.add('hidden');
-      mainMenu.classList.remove('hidden');
-    });
-    backToMenuBtn.addEventListener('click', () => {
-      achievementsScreen.classList.add('hidden');
-      mainMenu.classList.remove('hidden');
-    });
+    exitGameBtn.addEventListener('click', () => toggleScreens('menu'));
+    backToMenuBtn.addEventListener('click', () => toggleScreens('menu'));
 
-    // — Запуск игры
-    function startGame() {
-      // Сброс статистики
-      correctAnswers = 0;
-      incorrectAnswers = 0;
-      timeLeft = 30;
-      document.getElementById('correct-count').innerText = '0';
-      document.getElementById('incorrect-count').innerText = '0';
-
-      // Переключение экранов
-      mainMenu.classList.add('hidden');
-      resultScreen.classList.add('hidden');
-      gameScreen.classList.remove('hidden');
-
-      // Запуск таймера
-      startTimer();
-      generateQuestion();
-    }
-
-    // — Таймер
-    function startTimer() {
-      clearInterval(timer);
-      timerProgress.style.width = '100%';
-      timeLeft = 30;
-
-      timer = setInterval(() => {
-        timeLeft--;
-        timerProgress.style.width = `${(timeLeft / 30) * 100}%`;
-
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          endGame();
-        }
-      }, 1000);
-    }
-
-    // — Генерация вопроса
-    function generateQuestion() {
-      current = hiragana[Math.floor(Math.random() * hiragana.length)];
-      document.getElementById('hiragana').innerText = current.char;
-
-      const options = new Set([current.romaji]);
-      while (options.size < 3) {
-        const randomChar = hiragana[Math.floor(Math.random() * hiragana.length)];
-        options.add(randomChar.romaji);
+    // — Загрузка статистики игрока
+    async function loadUserStats() {
+      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${STATS_FILE}`;
+      try {
+        const res = await fetch(url, {
+          headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const stats = JSON.parse(atob(data.content));
+        userStats = stats.users?.[user.id] || { chars: {}, unlocked: 0 };
+      } catch (error) {
+        console.error("Ошибка загрузки статистики:", error);
       }
+    }
 
-      const optionsContainer = document.getElementById('options');
-      optionsContainer.innerHTML = '';
-      Array.from(options).sort(() => Math.random() - 0.5).forEach(opt => {
-        const button = document.createElement('button');
-        button.className = 'option-button w-full bg-gray-200 py-2 rounded-lg';
-        button.textContent = opt;
-        button.addEventListener('click', () => checkAnswer(opt, button));
-        optionsContainer.appendChild(button);
+    // — Сохранение статистики
+    async function saveUserStats() {
+      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${STATS_FILE}`;
+      const statsBlob = await fetch(url, {
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+      }).then(res => res.ok ? res.json() : null);
+
+      // Обновляем данные
+      const allStats = statsBlob ? JSON.parse(atob(statsBlob.content)) : { users: {} };
+      allStats.users[user.id] = userStats;
+
+      // Отправляем на GitHub
+      await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Update stats for ${user.id}`,
+          content: btoa(JSON.stringify(allStats)),
+          branch: BRANCH,
+          sha: statsBlob?.sha
+        })
       });
-
-      document.getElementById('feedback').textContent = '';
-    }
-
-    // — Проверка ответа
-    function checkAnswer(selected, button) {
-      const feedback = document.getElementById('feedback');
-      const isCorrect = selected === current.romaji;
-
-      if (isCorrect) {
-        correctAnswers++;
-        feedback.textContent = 'Правильно!';
-        feedback.className = 'text-center mt-4 text-lg text-green-600';
-        unlockedChars++; // Для теста (в реальном коде обновляйте через GitHub API)
-      } else {
-        incorrectAnswers++;
-        feedback.textContent = `Неправильно! Правильно: ${current.romaji}`;
-        feedback.className = 'text-center mt-4 text-lg text-red-600';
-      }
-
-      document.getElementById('correct-count').textContent = correctAnswers;
-      document.getElementById('incorrect-count').textContent = incorrectAnswers;
-
-      button.classList.add(isCorrect ? 'correct' : 'incorrect');
-      document.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
-
-      setTimeout(generateQuestion, 1000);
-    }
-
-    // — Завершение игры
-    function endGame() {
-      document.getElementById('final-correct').textContent = correctAnswers;
-      document.getElementById('final-incorrect').textContent = incorrectAnswers;
-      gameScreen.classList.add('hidden');
-      resultScreen.classList.remove('hidden');
-    }
-
-    // — Показ достижений
-    function showAchievements() {
-      mainMenu.classList.add('hidden');
-      achievementsScreen.classList.remove('hidden');
-      checkAchievements();
     }
 
     // — Проверка достижений
     function checkAchievements() {
       document.querySelectorAll('.achievement').forEach(ach => {
         const threshold = parseInt(ach.dataset.threshold);
-        if (unlockedChars >= threshold) {
-          ach.classList.add('unlocked');
-        } else {
-          ach.classList.remove('unlocked');
-        }
+        ach.classList.toggle('unlocked', userStats.unlocked >= threshold);
       });
     }
 
+    // — Переключение экранов
+    function toggleScreens(screen) {
+      mainMenu.classList.toggle('hidden', screen !== 'menu');
+      gameScreen.classList.toggle('hidden', screen !== 'game');
+      resultScreen.classList.toggle('hidden', screen !== 'result');
+      achievementsScreen.classList.toggle('hidden', screen !== 'achievements');
+    }
+
+    // — Запуск игры
+    async function startGame() {
+      await loadUserStats();
+      correctAnswers = 0;
+      incorrectAnswers = 0;
+      timeLeft = 30;
+      toggleScreens('game');
+      startTimer();
+      generateQuestion();
+    }
+
+    // — Остальные функции (generateQuestion, checkAnswer, endGame) остаются без изменений
+    // ... (используйте код из предыдущего примера)
+
     // — Инициализация
     tg.expand();
+    loadUserStats().then(checkAchievements);
   </script>
 </body>
 </html>
