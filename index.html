@@ -228,7 +228,7 @@
       button.classList.add(isCorrect ? 'correct' : 'incorrect');
       document.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
 
-      setTimeout(generateQuestion, 1000);
+      setTimeout(generateQuestion, 10);
     }
 
     // — Завершение игры
