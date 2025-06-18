@@ -2,276 +2,198 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hiragana Practice</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Хирагана: Найди пары</title>
   <style>
-    body { font-family: Arial, sans-serif; }
-    .option-button { transition: transform .2s; }
-    .option-button:hover { transform: scale(1.05); }
-    .correct { animation: flash-green .5s; }
-    .incorrect { animation: flash-red .5s; }
-    @keyframes flash-green { from {background:#34d399;} to {background:#fff;} }
-    @keyframes flash-red   { from {background:#ef4444;} to {background:#fff;} }
-    .timer { width: 100%; height: 5px; background-color: #e5e7eb; margin-bottom: 1rem; }
-    .timer-progress { height: 100%; background-color: #3b82f6; width: 100%; transition: width 1s linear; }
-    .achievement { opacity: 0.5; transition: all 0.3s; transform: scale(0.95); }
-    .achievement.unlocked { opacity: 1; transform: scale(1); }
-    .achievement img { filter: grayscale(100%); transition: filter 0.3s; }
-    .achievement.unlocked img { filter: grayscale(0%); }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f0f4f8;
+      color: #1f2937;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    #result {
+      display: none;
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 20px;
+      background: #e0f7fa;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .columns {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .column {
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      padding: 10px;
+      background: #e0e7ff;
+      text-align: center;
+      border-radius: 8px;
+      border: 3px solid transparent;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .card.selected {
+      border-color: #facc15;
+    }
+
+    .card.correct {
+      border-color: #34d399;
+      background: #d1fae5;
+    }
+
+    .card.incorrect {
+      border-color: #f87171;
+    }
+
+    .card.hidden {
+      visibility: hidden;
+    }
   </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-    <!-- Главное меню -->
-    <div id="main-menu" class="text-center">
-      <h1 class="text-2xl font-bold text-center mb-6">Hiragana Practice</h1>
-      <button id="start-game" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 mb-4 text-lg">
-        Начать игру
-      </button>
-      <button id="show-achievements" class="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 mb-4 text-lg">
-        Достижения
-      </button>
-    </div>
+<body>
 
-    <!-- Игровой экран -->
-    <div id="game-screen" class="hidden">
-      <div class="flex justify-between items-center mb-4">
-        <div>Правильно: <span id="correct-count" class="font-semibold">0</span></div>
-        <div>Неправильно: <span id="incorrect-count" class="font-semibold">0</span></div>
-      </div>
-      <div class="timer">
-        <div id="timer-progress" class="timer-progress"></div>
-      </div>
-      <div id="hiragana" class="text-6xl font-bold text-center mb-6"></div>
-      <div id="options" class="space-y-3"></div>
-      <div id="feedback" class="text-center mt-4 text-lg"></div>
-    </div>
+  <h1>🧠 Хирагана: Найди пары</h1>
+  <div id="result"></div>
 
-    <!-- Экран результатов -->
-    <div id="result-screen" class="hidden text-center">
-      <h2 class="text-xl font-bold mb-4">Результаты</h2>
-      <div class="mb-6">
-        <p>Правильных ответов: <span id="final-correct" class="font-semibold">0</span></p>
-        <p>Неправильных ответов: <span id="final-incorrect" class="font-semibold">0</span></p>
-      </div>
-      <div class="space-y-3">
-        <button id="play-again" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600">
-          Играть снова
-        </button>
-        <button id="exit-game" class="w-full bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600">
-          Выход
-        </button>
-      </div>
+  <div class="columns">
+    <div class="column">
+      <h3>Хирагана</h3>
+      <div class="grid" id="hiragana-column"></div>
     </div>
-
-    <!-- Экран достижений -->
-    <div id="achievements-screen" class="hidden text-center">
-      <h2 class="text-xl font-bold mb-4">Достижения</h2>
-      <div id="achievements-list" class="grid grid-cols-2 gap-4 mb-6">
-        <div class="achievement" data-threshold="5">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/1.png" class="w-24 h-24 mx-auto mb-2">
-          <p class="font-semibold">Новичок</p>
-          <p>5 символов</p>
-        </div>
-        <div class="achievement" data-threshold="10">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/2.png" class="w-24 h-24 mx-auto mb-2">
-          <p class="font-semibold">Ученик</p>
-          <p>10 символов</p>
-        </div>
-        <div class="achievement" data-threshold="20">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/3.png" class="w-24 h-24 mx-auto mb-2">
-          <p class="font-semibold">Знаток</p>
-          <p>20 символов</p>
-        </div>
-        <div class="achievement" data-threshold="35">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/4.png" class="w-24 h-24 mx-auto mb-2">
-          <p class="font-semibold">Мастер</p>
-          <p>35 символов</p>
-        </div>
-        <div class="achievement" data-threshold="46">
-          <img src="https://raw.githubusercontent.com/sobagreen/hiragana/main/assets/5.png" class="w-24 h-24 mx-auto mb-2">
-          <p class="font-semibold">Гуру</p>
-          <p>46 символов</p>
-        </div>
-      </div>
-      <button id="back-to-menu" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600">
-        Назад в меню
-      </button>
+    <div class="column">
+      <h3>Транскрипция</h3>
+      <div class="grid" id="romaji-column"></div>
     </div>
   </div>
 
   <script>
-    // — Telegram WebApp
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    const user = tg.initDataUnsafe.user || { id: 123456789, first_name: 'Test' }; // Для теста
-
-    // — Все символы хираганы (46 основных)
-    const hiragana = [
-      { char: 'あ', romaji: 'a' }, { char: 'い', romaji: 'i' }, { char: 'う', romaji: 'u' },
-      { char: 'え', romaji: 'e' }, { char: 'お', romaji: 'o' }, { char: 'か', romaji: 'ka' },
-      { char: 'き', romaji: 'ki' }, { char: 'く', romaji: 'ku' }, { char: 'け', romaji: 'ke' },
-      { char: 'こ', romaji: 'ko' }, { char: 'さ', romaji: 'sa' }, { char: 'し', romaji: 'shi' },
-      { char: 'す', romaji: 'su' }, { char: 'せ', romaji: 'se' }, { char: 'そ', romaji: 'so' },
-      { char: 'た', romaji: 'ta' }, { char: 'ち', romaji: 'chi' }, { char: 'つ', romaji: 'tsu' },
-      { char: 'て', romaji: 'te' }, { char: 'と', romaji: 'to' }, { char: 'な', romaji: 'na' },
-      { char: 'に', romaji: 'ni' }, { char: 'ぬ', romaji: 'nu' }, { char: 'ね', romaji: 'ne' },
-      { char: 'の', romaji: 'no' }, { char: 'は', romaji: 'ha' }, { char: 'ひ', romaji: 'hi' },
-      { char: 'ふ', romaji: 'fu' }, { char: 'へ', romaji: 'he' }, { char: 'ほ', romaji: 'ho' },
-      { char: 'ま', romaji: 'ma' }, { char: 'み', romaji: 'mi' }, { char: 'む', romaji: 'mu' },
-      { char: 'め', romaji: 'me' }, { char: 'も', romaji: 'mo' }, { char: 'や', romaji: 'ya' },
-      { char: 'ゆ', romaji: 'yu' }, { char: 'よ', romaji: 'yo' }, { char: 'ら', romaji: 'ra' },
-      { char: 'り', romaji: 'ri' }, { char: 'る', romaji: 'ru' }, { char: 'れ', romaji: 're' },
-      { char: 'ろ', romaji: 'ro' }, { char: 'わ', romaji: 'wa' }, { char: 'を', romaji: 'wo' },
+    const symbols = [
+      { char: 'あ', romaji: 'a' }, { char: 'い', romaji: 'i' }, { char: 'う', romaji: 'u' }, { char: 'え', romaji: 'e' }, { char: 'お', romaji: 'o' },
+      { char: 'か', romaji: 'ka' }, { char: 'き', romaji: 'ki' }, { char: 'く', romaji: 'ku' }, { char: 'け', romaji: 'ke' }, { char: 'こ', romaji: 'ko' },
+      { char: 'さ', romaji: 'sa' }, { char: 'し', romaji: 'shi' }, { char: 'す', romaji: 'su' }, { char: 'せ', romaji: 'se' }, { char: 'そ', romaji: 'so' },
+      { char: 'た', romaji: 'ta' }, { char: 'ち', romaji: 'chi' }, { char: 'つ', romaji: 'tsu' }, { char: 'て', romaji: 'te' }, { char: 'と', romaji: 'to' },
+      { char: 'な', romaji: 'na' }, { char: 'に', romaji: 'ni' }, { char: 'ぬ', romaji: 'nu' }, { char: 'ね', romaji: 'ne' }, { char: 'の', romaji: 'no' },
+      { char: 'は', romaji: 'ha' }, { char: 'ひ', romaji: 'hi' }, { char: 'ふ', romaji: 'fu' }, { char: 'へ', romaji: 'he' }, { char: 'ほ', romaji: 'ho' },
+      { char: 'ま', romaji: 'ma' }, { char: 'み', romaji: 'mi' }, { char: 'む', romaji: 'mu' }, { char: 'め', romaji: 'me' }, { char: 'も', romaji: 'mo' },
+      { char: 'や', romaji: 'ya' }, { char: 'ゆ', romaji: 'yu' }, { char: 'よ', romaji: 'yo' }, { char: 'ら', romaji: 'ra' }, { char: 'り', romaji: 'ri' },
+      { char: 'る', romaji: 'ru' }, { char: 'れ', romaji: 're' }, { char: 'ろ', romaji: 'ro' }, { char: 'わ', romaji: 'wa' }, { char: 'を', romaji: 'wo' },
       { char: 'ん', romaji: 'n' }
     ];
 
-    // — Игровые переменные
-    let current = null;
-    let correctAnswers = 0;
-    let incorrectAnswers = 0;
-    let timeLeft = 30;
-    let timer;
-    let userStats = { chars: {}, unlocked: 0 };
+    let selected = [];
+    let matched = 0;
+    let errors = 0;
+    let startTime;
 
-    // — Элементы интерфейса
-    const mainMenu = document.getElementById('main-menu');
-    const gameScreen = document.getElementById('game-screen');
-    const resultScreen = document.getElementById('result-screen');
-    const achievementsScreen = document.getElementById('achievements-screen');
-    const startGameBtn = document.getElementById('start-game');
-    const showAchievementsBtn = document.getElementById('show-achievements');
-    const playAgainBtn = document.getElementById('play-again');
-    const exitGameBtn = document.getElementById('exit-game');
-    const backToMenuBtn = document.getElementById('back-to-menu');
-    const timerProgress = document.getElementById('timer-progress');
-
-    // — Обработчики кнопок
-    startGameBtn.addEventListener('click', startGame);
-    showAchievementsBtn.addEventListener('click', showAchievements);
-    playAgainBtn.addEventListener('click', startGame);
-    exitGameBtn.addEventListener('click', () => toggleScreens('menu'));
-    backToMenuBtn.addEventListener('click', () => toggleScreens('menu'));
-
-    // — Таймер игры
-    function startTimer() {
-      clearInterval(timer);
-      timerProgress.style.width = '100%';
-      timeLeft = 30;
-      
-      timer = setInterval(() => {
-        timeLeft--;
-        timerProgress.style.width = `${(timeLeft / 30) * 100}%`;
-        
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          endGame();
-        }
-      }, 1000);
+    function shuffle(array) {
+      return [...array].sort(() => Math.random() - 0.5);
     }
 
-    // — Генерация вопроса
-    function generateQuestion() {
-      current = hiragana[Math.floor(Math.random() * hiragana.length)];
-      document.getElementById('hiragana').innerText = current.char;
+    function createCards() {
+  const hContainer = document.getElementById("hiragana-column");
+  const rContainer = document.getElementById("romaji-column");
 
-      const options = new Set([current.romaji]);
-      while (options.size < 3) {
-        const randomChar = hiragana[Math.floor(Math.random() * hiragana.length)];
-        options.add(randomChar.romaji);
+  const shuffledChars = shuffle(symbols);
+  const shuffledRomaji = shuffle(symbols);
+
+  shuffledChars.forEach(item => {
+    const hCard = document.createElement("div");
+    hCard.className = "card";
+    hCard.textContent = item.char;
+    hCard.dataset.key = item.romaji;
+    hCard.dataset.type = "char";
+    hContainer.appendChild(hCard);
+  });
+
+  shuffledRomaji.forEach(item => {
+    const rCard = document.createElement("div");
+    rCard.className = "card";
+    rCard.textContent = item.romaji;
+    rCard.dataset.key = item.romaji;
+    rCard.dataset.type = "romaji";
+    rContainer.appendChild(rCard);
+  });
+}
+
+    function handleCardClick(e) {
+      const card = e.target;
+      if (!card.classList.contains("card") || card.classList.contains("hidden") || selected.includes(card)) return;
+
+      card.classList.add("selected");
+      selected.push(card);
+
+      if (selected.length === 2) {
+        const [a, b] = selected;
+        if (a.dataset.key === b.dataset.key && a.dataset.type !== b.dataset.type) {
+          a.classList.add("correct");
+          b.classList.add("correct");
+          setTimeout(() => {
+            a.classList.add("hidden");
+            b.classList.add("hidden");
+            matched++;
+            if (matched === symbols.length) showResult();
+          }, 500);
+        } else {
+          a.classList.add("incorrect");
+          b.classList.add("incorrect");
+          errors++;
+          setTimeout(() => {
+            a.classList.remove("selected", "incorrect");
+            b.classList.remove("selected", "incorrect");
+          }, 500);
+        }
+        selected = [];
       }
+    }
 
-      const optionsContainer = document.getElementById('options');
-      optionsContainer.innerHTML = '';
-      Array.from(options).sort(() => Math.random() - 0.5).forEach(opt => {
-        const button = document.createElement('button');
-        button.className = 'option-button w-full bg-gray-200 py-2 rounded-lg';
-        button.textContent = opt;
-        button.addEventListener('click', () => checkAnswer(opt, button));
-        optionsContainer.appendChild(button);
+    function showResult() {
+      const time = Math.floor((Date.now() - startTime) / 1000);
+      const result = document.getElementById("result");
+      result.style.display = "block";
+      result.innerHTML = `
+        <strong>🎉 Вы победили!</strong><br>
+        ⏱ Время: <b>${time} сек</b><br>
+        ❌ Ошибки: <b>${errors}</b><br>
+        Спасибо за игру! 😊
+      `;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      startTime = Date.now();
+      createCards();
+      document.querySelectorAll(".card").forEach(card => {
+        card.addEventListener("click", handleCardClick);
       });
-
-      document.getElementById('feedback').textContent = '';
-    }
-
-    // — Проверка ответа
-    function checkAnswer(selected, button) {
-      const feedback = document.getElementById('feedback');
-      const isCorrect = selected === current.romaji;
-
-      if (isCorrect) {
-        correctAnswers++;
-        feedback.textContent = 'Правильно!';
-        feedback.className = 'text-center mt-4 text-lg text-green-600';
-        
-        // Обновляем статистику по символу
-        if (!userStats.chars[current.char]) {
-          userStats.chars[current.char] = 0;
-        }
-        userStats.chars[current.char]++;
-        
-        // Проверяем, открыт ли символ (>=3 правильных ответа)
-        if (userStats.chars[current.char] === 3) {
-          userStats.unlocked++;
-        }
-      } else {
-        incorrectAnswers++;
-        feedback.textContent = `Неправильно! Правильно: ${current.romaji}`;
-        feedback.className = 'text-center mt-4 text-lg text-red-600';
-      }
-
-      document.getElementById('correct-count').textContent = correctAnswers;
-      document.getElementById('incorrect-count').textContent = incorrectAnswers;
-
-      button.classList.add(isCorrect ? 'correct' : 'incorrect');
-      document.querySelectorAll('.option-button').forEach(btn => btn.disabled = true);
-
-      setTimeout(generateQuestion, 10);
-    }
-
-    // — Завершение игры
-    function endGame() {
-      document.getElementById('final-correct').textContent = correctAnswers;
-      document.getElementById('final-incorrect').textContent = incorrectAnswers;
-      toggleScreens('result');
-    }
-
-    // — Показ достижений
-    function showAchievements() {
-      toggleScreens('achievements');
-      checkAchievements();
-    }
-
-    // — Проверка достижений
-    function checkAchievements() {
-      document.querySelectorAll('.achievement').forEach(ach => {
-        const threshold = parseInt(ach.dataset.threshold);
-        ach.classList.toggle('unlocked', userStats.unlocked >= threshold);
-      });
-    }
-
-    // — Переключение экранов
-    function toggleScreens(screen) {
-      mainMenu.classList.toggle('hidden', screen !== 'menu');
-      gameScreen.classList.toggle('hidden', screen !== 'game');
-      resultScreen.classList.toggle('hidden', screen !== 'result');
-      achievementsScreen.classList.toggle('hidden', screen !== 'achievements');
-    }
-
-    // — Запуск игры
-    async function startGame() {
-      correctAnswers = 0;
-      incorrectAnswers = 0;
-      timeLeft = 30;
-      toggleScreens('game');
-      startTimer();
-      generateQuestion();
-    }
-
-    // — Инициализация
-    tg.expand();
+    });
   </script>
 </body>
 </html>
