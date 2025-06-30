@@ -2,67 +2,104 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Хирагана: Найди пары</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 10px;
       background: #f0f4f8;
       color: #1f2937;
+      -webkit-text-size-adjust: 100%;
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 10px;
+      margin: 10px 0;
+      font-size: 1.5rem;
     }
 
     #result {
       display: none;
       text-align: center;
-      font-size: 18px;
-      margin-bottom: 20px;
+      font-size: 1rem;
+      margin: 10px 0;
       background: #e0f7fa;
       padding: 10px;
       border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .columns {
       display: flex;
-      justify-content: space-around;
-      flex-wrap: wrap;
-      gap: 20px;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    @media (min-width: 768px) {
+      .columns {
+        flex-direction: row;
+        justify-content: space-around;
+      }
     }
 
     .column {
       flex: 1;
-      min-width: 300px;
-      max-width: 400px;
+      min-width: 0;
       background: #ffffff;
-      padding: 20px;
+      padding: 15px;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .column h3 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 8px;
+    }
+
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 6px;
+      }
     }
 
     .card {
-      padding: 10px;
+      padding: 12px 5px;
       background: #e0e7ff;
       text-align: center;
       border-radius: 8px;
-      border: 3px solid transparent;
-      font-size: 20px;
+      border: 2px solid transparent;
+      font-size: 1.1rem;
       cursor: pointer;
       transition: all 0.3s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 10px 3px;
+        font-size: 1rem;
+      }
     }
 
     .card.selected {
       border-color: #facc15;
+      transform: scale(0.95);
     }
 
     .card.correct {
@@ -72,10 +109,13 @@
 
     .card.incorrect {
       border-color: #f87171;
+      background: #fee2e2;
     }
 
     .card.hidden {
       visibility: hidden;
+      opacity: 0;
+      transform: scale(0);
     }
   </style>
 </head>
@@ -119,34 +159,38 @@
     }
 
     function createCards() {
-  const hContainer = document.getElementById("hiragana-column");
-  const rContainer = document.getElementById("romaji-column");
+      const hContainer = document.getElementById("hiragana-column");
+      const rContainer = document.getElementById("romaji-column");
 
-  const shuffledChars = shuffle(symbols);
-  const shuffledRomaji = shuffle(symbols);
+      // Clear previous cards
+      hContainer.innerHTML = '';
+      rContainer.innerHTML = '';
 
-  shuffledChars.forEach(item => {
-    const hCard = document.createElement("div");
-    hCard.className = "card";
-    hCard.textContent = item.char;
-    hCard.dataset.key = item.romaji;
-    hCard.dataset.type = "char";
-    hContainer.appendChild(hCard);
-  });
+      const shuffledChars = shuffle(symbols);
+      const shuffledRomaji = shuffle(symbols);
 
-  shuffledRomaji.forEach(item => {
-    const rCard = document.createElement("div");
-    rCard.className = "card";
-    rCard.textContent = item.romaji;
-    rCard.dataset.key = item.romaji;
-    rCard.dataset.type = "romaji";
-    rContainer.appendChild(rCard);
-  });
-}
+      shuffledChars.forEach(item => {
+        const hCard = document.createElement("div");
+        hCard.className = "card";
+        hCard.textContent = item.char;
+        hCard.dataset.key = item.romaji;
+        hCard.dataset.type = "char";
+        hContainer.appendChild(hCard);
+      });
+
+      shuffledRomaji.forEach(item => {
+        const rCard = document.createElement("div");
+        rCard.className = "card";
+        rCard.textContent = item.romaji;
+        rCard.dataset.key = item.romaji;
+        rCard.dataset.type = "romaji";
+        rContainer.appendChild(rCard);
+      });
+    }
 
     function handleCardClick(e) {
-      const card = e.target;
-      if (!card.classList.contains("card") || card.classList.contains("hidden") || selected.includes(card)) return;
+      const card = e.target.closest(".card");
+      if (!card || card.classList.contains("hidden") || selected.includes(card)) return;
 
       card.classList.add("selected");
       selected.push(card);
@@ -187,13 +231,26 @@
       `;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    function initGame() {
       startTime = Date.now();
+      matched = 0;
+      errors = 0;
+      selected = [];
+      document.getElementById("result").style.display = "none";
       createCards();
+      
+      // Remove previous event listeners
+      document.querySelectorAll(".card").forEach(card => {
+        card.removeEventListener("click", handleCardClick);
+      });
+      
+      // Add new event listeners
       document.querySelectorAll(".card").forEach(card => {
         card.addEventListener("click", handleCardClick);
       });
-    });
+    }
+
+    document.addEventListener("DOMContentLoaded", initGame);
   </script>
 </body>
 </html>
